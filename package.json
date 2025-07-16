@@ -1,0 +1,49 @@
+{
+  "name": "y",
+  "version": "1.0.0",
+  "description": "All Media Indo Desktop App",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^37.2.1",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "com.allmediaindo.app",
+    "productName": "All Media Indo App",
+    "copyright": "Copyright © 2024 Your Name",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "**/*",
+      "!node_modules/${productName}/node_modules"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "build/AppIcon.ico"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "build/AppIcon.icns"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb",
+        "rpm"
+      ],
+      "icon": "build/AppIcon.png"
+    }
+  },
+  "dependencies": {
+    "@xterm/xterm": "^5.5.0"
+  }
+}
