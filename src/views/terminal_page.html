@@ -1,34 +1,305 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Second Window - Terminal Output</title>
-    <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="node_modules/@xterm/xterm/css/xterm.css" />
-    <script src="node_modules/@xterm/xterm/lib/xterm.js"></script>
+    <title>Terminal Output</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; }
+        
+        :root {
+            --input-color: #99a3ba;
+            --input-border: #cdd9ed;
+            --input-background: #fff;
+            --input-placeholder: #cbd1dc;
+            --input-border-focus: #275efe;
+            --group-color: var(--input-color);
+            --group-border: var(--input-border);
+            --group-background: #eef4ff;
+            --group-color-focus: #fff;
+            --group-border-focus: var(--input-border-focus);
+            --group-background-focus: #678efe;
+        }
+
+        .form-field {
+            display: block;
+            width: 100%;
+            padding: 8px 16px;
+            line-height: 25px;
+            font-size: 14px;
+            font-weight: 500;
+            font-family: inherit;
+            border-radius: 6px;
+            -webkit-appearance: none;
+            color: var(--input-color);
+            border: 1px solid var(--input-border);
+            background: var(--input-background);
+            transition: border 0.3s ease;
+        }
+        .form-field::-moz-placeholder {
+            color: var(--input-placeholder);
+        }
+        .form-field:-ms-input-placeholder {
+            color: var(--input-placeholder);
+        }
+        .form-field::placeholder {
+            color: var(--input-placeholder);
+        }
+        .form-field:focus {
+            outline: none;
+            border-color: var(--input-border-focus);
+        }
+
+        .form-group {
+            position: relative;
+            display: flex;
+            width: 100%;
+        }
+        .form-group > span,
+        .form-group .form-field {
+            white-space: nowrap;
+            display: block;
+        }
+        .form-group > span:not(:first-child):not(:last-child),
+        .form-group .form-field:not(:first-child):not(:last-child) {
+            border-radius: 0;
+        }
+        .form-group > span:first-child,
+        .form-group .form-field:first-child {
+            border-radius: 6px 0 0 6px;
+        }
+        .form-group > span:last-child,
+        .form-group .form-field:last-child {
+            border-radius: 0 6px 6px 0;
+        }
+        .form-group > span:not(:first-child),
+        .form-group .form-field:not(:first-child) {
+            margin-left: -1px;
+        }
+        .form-group .form-field {
+            position: relative;
+            z-index: 1;
+            flex: 1 1 auto;
+            width: 1%;
+            margin-top: 0;
+            margin-bottom: 0;
+        }
+        .form-group > span {
+            text-align: center;
+            padding: 8px 12px;
+            font-size: 14px;
+            line-height: 25px;
+            color: var(--group-color);
+            background: var(--group-background);
+            border: 1px solid var(--group-border);
+            transition: background 0.3s ease, border 0.3s ease, color 0.3s ease;
+        }
+        .form-group:focus-within > span {
+            color: var(--group-color-focus);
+            background: var(--group-background-focus);
+            border-color: var(--group-border-focus);
+        }
+
+        html {
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        * {
+            box-sizing: inherit;
+        }
+        *:before, *:after {
+            box-sizing: inherit;
+        }
+        body .form-group {
+            max-width: 360px;
+        }
+            body .form-group:not(:last-child) {
+            margin-bottom: 32px;
+        }
+        body { 
+            min-height: 100vh;
+            font-family: 'Inter', sans-serif;
+            padding: 20px; 
+            background-color: #f5f9ff;
+            box-sizing: border-box;
+        }
         #commandInput { width: 80%; padding: 8px; margin-right: 10px; }
         #output {
-            background-color: #f0f0f0;
-            border: 1px solid #ccc;
+            background-color: #1e1e1e;
+            color: #f0f0f0;
+            border: 1px solid #444;
             padding: 10px;
             margin-top: 20px;
-            white-space: pre-wrap; /* Preserve whitespace and wrap text */
+            white-space: pre-wrap;
             font-family: 'Courier New', Courier, monospace;
             height: 300px;
             overflow-y: scroll;
+        }
+        button {
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
         }
     </style>
 </head>
 <body>
     <h1>Terminal Output Viewer</h1>
-
-    <input type="text" id="commandInput" placeholder="Enter command (e.g., ls -l, dir)">
-    <button id="executeCommandBtn">Execute Command</button>
-
+    <div class="form-group">
+        <span>bash</span>
+        <input class="form-field" type="text" placeholder="e.g., ls -l, dir" id="commandInput">
+    </div>
     <h2>Output:</h2>
     <pre id="output">No command executed yet.</pre>
-    <script src="src/controllers/secondPageRenderer.js"></script> 
+    
+    <script>
+        const { ipcRenderer } = require('electron');
+
+        // Get the initial command from URL parameters
+        
+        // Get references to elements
+        const commandInput = document.getElementById('commandInput');
+        const executeButton = document.getElementById('executeCommandBtn');
+        
+        const url = new URL(window.location.href);
+        const initialCommand = url.searchParams.get('command');
+
+        function executeCommandInit(command) {
+            if (!command) return;
+            
+            outputElement.textContent += `$ ${command}\n`;
+            ipcRenderer.send('execute-command', decodeURIComponent(command));
+        }
+        // Function to execute command
+        function executeCommand() {
+            const command = commandInput.value.trim();
+            if (command) {
+                ipcRenderer.send('execute-command', command);
+                commandInput.value = ''; // Clear input after sending (optional)
+            }
+        }
+        
+        
+        // Keypress event for input field
+        commandInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                executeCommand();
+            }
+        });
+        
+        // Handle command responses
+        ipcRenderer.on('command-response', (event, data) => {
+            const outputElement = document.getElementById('output');
+            if (data.error) {
+                outputElement.textContent = `Error: ${data.error}`;
+                outputElement.style.color = '#ff6b6b';
+            } else {
+                outputElement.textContent = data.output;
+                outputElement.style.color = '#f0f0f0';
+            }
+            
+            // Scroll to bottom of output
+            outputElement.scrollTop = outputElement.scrollHeight;
+        });
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if (initialCommand) {
+                executeCommandInit(initialCommand);
+            }
+        });
+    </script>
+</body>
+</html> -->
+
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Terminal Output</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #1e1e1e;
+            color: #f0f0f0;
+        }
+        #output {
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            padding: 10px;
+            background-color: #252525;
+            border-radius: 5px;
+            height: 80vh;
+            overflow-y: auto;
+        }
+        #commandInput {
+            width: 100%;
+            padding: 8px;
+            margin-top: 10px;
+            background-color: #252525;
+            color: #f0f0f0;
+            border: 1px solid #444;
+        }
+    </style>
+</head>
+<body>
+    <h1>Terminal Output</h1>
+    <pre id="output"></pre>
+    <input type="text" id="commandInput" placeholder="Enter command...">
+
+    <script>
+        const { ipcRenderer } = require('electron');
+        const outputElement = document.getElementById('output');
+        const commandInput = document.getElementById('commandInput');
+        
+        // Get initial command from URL
+        const url = new URL(window.location.href);
+        const initialCommand = url.searchParams.get('command');
+        
+        // Execute command function
+        function executeCommand(command) {
+            if (!command) return;
+            
+            // Display the command being executed
+            outputElement.textContent += `$ ${command}\n`;
+            
+            // Send to main process for execution
+            ipcRenderer.send('execute-command', decodeURIComponent(command));
+            
+            // Clear input
+            commandInput.value = '';
+        }
+        
+        // Handle command responses
+        ipcRenderer.on('command-response', (event, data) => {
+            if (data.error) {
+                outputElement.textContent += `Error: ${data.error}\n`;
+            } else {
+                outputElement.textContent += `${data.output}\n`;
+            }
+            
+            // Auto-scroll to bottom
+            outputElement.scrollTop = outputElement.scrollHeight;
+        });
+        
+        // Input handling
+        commandInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                executeCommand(commandInput.value.trim());
+            }
+        });
+        
+        // Execute initial command if provided
+        window.addEventListener('DOMContentLoaded', () => {
+            commandInput.focus();
+            if (initialCommand) {
+                executeCommand(initialCommand);
+            }
+        });
+    </script>
 </body>
 </html>

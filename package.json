@@ -7,13 +7,18 @@
     "start": "electron .",
     "pack": "electron-builder --dir",
     "dist": "electron-builder",
+    "dev": "webpack serve --mode development",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "autoprefixer": "^10.4.21",
     "electron": "^37.2.1",
-    "electron-builder": "^26.0.12"
+    "electron-builder": "^26.0.12",
+    "electron-reloader": "^1.2.3",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.11"
   },
   "build": {
     "appId": "com.allmediaindo.app",

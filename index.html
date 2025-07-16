@@ -1,12 +1,186 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8">
-    <title>All Media Indo</title>
-    <link rel="stylesheet" href="styles.css"> </head>
-<body>
-    <h1>Welcome to the Main Window!</h1>
-    <button id="openSecondWindowBtn">Open Second Window</button>
+    <title>Terminal Controller</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Rum+Raisin&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #f0f2f5; /* bg-gray-100 */
+            padding: 20px; /* p-5 */
+            margin: 0;
+            box-sizing: border-box;
+        }
 
-    <script src="renderer.js"></script> </body>
+        .container {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 600px; /* h-[600px] */
+            width: 100%; /* w-full */
+            max-width: 896px; /* max-w-xl (Tailwind's xl breakpoint is 1280px, but for max-width, it's usually smaller like 896px for 'xl' container) */
+            background-color: #ffffff; /* bg-white */
+            padding: 32px; /* p-8 */
+            border-radius: 12px; /* rounded-xl */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-lg */
+            text-align: center;
+        }
+
+        @media (min-width: 768px) { /* md:h-[700px] */
+            .container {
+                height: 700px;
+            }
+        }
+
+        /* Title Item */
+        .title {
+            font-size: 2.25rem; /* text-4xl */
+            font-weight: 700; /* font-bold */
+            color: #1f2937; /* text-gray-800 */
+            margin-bottom: 16px; /* mb-4 */
+        }
+
+        /* Body Content Item */
+        .body-content {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 20px; /* gap-5 (Tailwind's gap-5 is 20px) */
+            text-align: left;
+            flex-grow: 1; /* flex-grow */
+            margin-bottom: 16px; /* mb-4 */
+        }
+
+        .body-content p {
+            flex-grow: 1;
+            max-width: 70%;
+            padding-right: 16px; /* pr-4 (Tailwind's pr-4 is 16px) */
+            font-size: 1.125rem; /* text-lg */
+            line-height: 1.75; /* leading-relaxed */
+            color: #4b5563; /* text-gray-600 */
+        }
+
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch; /* Kunci untuk lebar tombol yang sama */
+            gap: 12px; /* space-y-3 (Tailwind's space-y-3 is 12px) */
+            margin-top: 0; /* mt-0 */
+        }
+
+        .button {
+            background-color: #3b82f6; /* bg-blue-500 */
+            color: white; /* text-white */
+            padding: 8px 16px; /* py-2 px-4 */
+            border-radius: 4px; /* rounded */
+            font-size: 1rem; /* text-base */
+            font-weight: 500; /* font-medium */
+            width: 100%; /* w-full */
+            min-width: 120px; /* min-w-[120px] */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06); /* shadow-md */
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out; /* Untuk efek hover */
+        }
+
+        .buttonExit {
+            background-color: #ef4444;
+            color: white; /* text-white */
+            padding: 8px 16px; /* py-2 px-4 */
+            border-radius: 4px; /* rounded */
+            font-size: 1rem; /* text-base */
+            font-weight: 500; /* font-medium */
+            width: 100%; /* w-full */
+            min-width: 120px; /* min-w-[120px] */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06); /* shadow-md */
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out; /* Untuk efek hover */
+        }
+
+        .button:hover {
+            background-color: #2563eb; /* hover:bg-blue-600 */
+        }
+
+        /* Styling spesifik untuk tombol Exit */
+        #terminalThree {
+            background-color: #ef4444; /* bg-red-500 */
+        }
+
+        #terminalThree:hover {
+            background-color: #dc2626; /* hover:bg-red-600 */
+        }
+
+        /* Signature Item */
+        .signature {
+            font-size: 0.875rem; /* text-sm */
+            color: #6b7280; /* text-gray-500 */
+            font-style: italic; /* italic */
+            margin-top: auto; /* mt-auto */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="item title">
+            <img src="assets/icon_perusahaan.png" alt="logo" srcset="" style="width: 20%;">
+            <h1>Aplikasi Terminal</h1>
+        </div>
+        <div class="item body-content">
+            <p>Ini adalah isi artikel atau konten utama. Anda bisa menulis paragraf panjang di sini. Tujuan dari bagian ini adalah untuk menyampaikan informasi inti atau cerita. Dengan menggunakan Flexbox, bagian ini akan secara otomatis mengisi ruang yang tersedia di antara judul dan tanda tangan, memastikan tata letak yang rapi dan terorganisir.</p>
+            <div class="btn-group">
+                <button class="button" id="openTerminalBtn">Meta 4</button>
+                <button class="button" id="openTerminalWithCommand">Meta 5</button>
+                <button class="buttonExit" id="closeButton">Exit App</button>
+                <button id="lsBtn" class="button">Open Terminal with 'ls'</button>
+                <button id="pwdBtn" class="button">Open Terminal with 'pwd'</button>
+                <button id="ifconfigBtn" class="button">Open Terminal with 'ifconfig'</button>
+                <button id="emptyTerminalBtn" class="button">Open Empty Terminal</button>
+            </div>
+        </div>
+        <div class="item signature">
+            <p>Dikembangkan oleh PT. All Media Indo</p>
+        </div>
+    </div>
+    <!-- <button id="openTerminalBtn">Open Terminal Window</button> -->
+    
+    <script>
+        const { ipcRenderer } = require('electron');
+        
+        document.getElementById('openTerminalBtn').addEventListener('click', () => {
+            ipcRenderer.send('open-terminal-window', 'ifconfig');
+        });
+
+        document.getElementById('openTerminalWithCommand').addEventListener('click', () => {
+            ipcRenderer.send('open-terminal-with-command', 'ifconfig');
+        });
+
+        document.getElementById('closeButton').addEventListener('click', () => {
+            ipcRenderer.send('close-app');
+        });
+
+        document.getElementById('lsBtn').addEventListener('click', () => {
+            ipcRenderer.send('open-terminal-with-command', 'ls');
+        });
+        
+        document.getElementById('pwdBtn').addEventListener('click', () => {
+            ipcRenderer.send('open-terminal-with-command', 'pwd');
+        });
+        
+        document.getElementById('ifconfigBtn').addEventListener('click', () => {
+            ipcRenderer.send('open-terminal-with-command', 'ifconfig');
+        });
+        
+        document.getElementById('emptyTerminalBtn').addEventListener('click', () => {
+            ipcRenderer.send('open-terminal-window');
+        });
+    </script>
+</body>
 </html>

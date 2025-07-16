@@ -1,80 +1,213 @@
-const { app, BrowserWindow, ipcMain } = require('electron')
-const path = require('path');
+// const { app, BrowserWindow, ipcMain } = require('electron');
+// const { exec } = require('child_process');
+
+// let mainWindow;
+// let outputWindow;
+
+// function createMainWindow() {
+//     mainWindow = new BrowserWindow({
+//         width: 800,
+//         height: 600,
+//         resizable: false,
+//         webPreferences: {
+//             nodeIntegration: true,
+//             contextIsolation: false
+//         }
+//     });
+
+//     mainWindow.loadFile('index.html');
+// }
+
+// function createOutputWindow() {
+//     outputWindow = new BrowserWindow({
+//         width: 800,
+//         height: 600,
+//         resizable: false,
+//         webPreferences: {
+//             nodeIntegration: true,
+//             contextIsolation: false
+//         }
+//     });
+
+//     outputWindow.loadFile('src/views/terminal_page.html');
+// }
+
+// // Handle command execution
+// ipcMain.on('execute-command', (event, command) => {
+//     exec(command, (error, stdout, stderr) => {
+//         if (error) {
+//             event.sender.send('command-response', { error: error.message });
+//             return;
+//         }
+//         if (stderr) {
+//             event.sender.send('command-response', { error: stderr });
+//             return;
+//         }
+//         event.sender.send('command-response', { output: stdout });
+//     });
+// });
+
+// ipcMain.on('open-terminal-window', () => {
+//     if (!outputWindow || outputWindow.isDestroyed()) {
+//         createOutputWindow();
+//     } else {
+//         outputWindow.focus();
+//     }
+// });
+
+// ipcMain.on('open-terminal-with-command', (event, command) => {
+
+//   terminalWindow = new BrowserWindow({
+//     width: 800,
+//     height: 600,
+//     webPreferences: {
+//       nodeIntegration: true,
+//       contextIsolation: false
+//     }
+//   });
+
+//   // Pass the command as a URL parameter
+//   terminalWindow.loadFile('src/views/terminal_page.html', {
+//     query: { command: encodeURIComponent(command) }
+//   });
+
+//   // Alternative: Store command globally and send via IPC
+//   // terminalWindow.commandToExecute = command;
+//   // terminalWindow.loadFile('terminal.html');
+// });
+
+// ipcMain.on('close-app', () => {
+//   app.quit();
+// });
+
+// try {
+//   require('electron-reloader')(module, {
+//     debug: true,
+//     watchRenderer: true
+//   });
+// } catch (_) { console.log('Error'); }
+
+// app.whenReady().then(() => {
+//     createMainWindow();
+// });
+
+
+const { app, BrowserWindow, ipcMain } = require('electron');
 const { exec } = require('child_process');
+const path = require('path');
 
-let mainWindow; // Jendela utama
-let secondWindow; // Jendela kedua
+// Window references
+let mainWindow;
+let terminalWindow;
 
-function createWindow() {
-    mainWindow = new BrowserWindow({
-        width: 800,
-        height: 600,
-        webPreferences: {
-            preload: path.join(__dirname, 'preload.js'), // Penting untuk keamanan
-            nodeIntegration: false, // Disarankan false untuk keamanan
-            contextIsolation: true // Disarankan true untuk keamanan
-        }
-    });
+// Configuration
+const windowConfig = {
+  width: 800,
+  height: 600,
+  resizable: false,
+  webPreferences: {
+    nodeIntegration: true,
+    contextIsolation: false,
+    enableRemoteModule: true // Only if you need remote module
+  }
+};
 
-    mainWindow.loadFile('index.html');
-
-    // Buka DevTools (opsional)
-    // mainWindow.webContents.openDevTools();
+function createMainWindow() {
+  mainWindow = new BrowserWindow(windowConfig);
+  mainWindow.loadFile('index.html');
+  
+  // Optional: DevTools in development
+  if (process.env.NODE_ENV === 'development') {
+    mainWindow.webContents.openDevTools();
+  }
 }
 
-app.whenReady().then(() => {
-    createWindow();
+function createTerminalWindow(command = null) {
+  if (terminalWindow && !terminalWindow.isDestroyed()) {
+    terminalWindow.close();
+  }
 
-    app.on('activate', () => {
-        if (BrowserWindow.getAllWindows().length === 0) {
-            createWindow();
-        }
+  terminalWindow = new BrowserWindow(windowConfig);
+  
+  if (command) {
+    // Pass command via URL parameter
+    terminalWindow.loadFile(path.join(__dirname, 'src/views/terminal_page.html'), {
+      query: { command: encodeURIComponent(command) }
     });
+  } else {
+    terminalWindow.loadFile(path.join(__dirname, 'src/views/terminal_page.html'));
+  }
+
+  // Optional: DevTools in development
+  if (process.env.NODE_ENV === 'development') {
+    terminalWindow.webContents.openDevTools();
+  }
+}
+
+// IPC Handlers
+function setupIPCHandlers() {
+  // Execute command handler
+  ipcMain.on('execute-command', (event, command) => {
+    exec(command, (error, stdout, stderr) => {
+      const response = error 
+        ? { error: error.message } 
+        : stderr 
+          ? { error: stderr } 
+          : { output: stdout };
+          
+      event.sender.send('command-response', response);
+    });
+  });
+
+  // Open terminal window handlers
+  ipcMain.on('open-terminal-window', () => {
+    if (!terminalWindow || terminalWindow.isDestroyed()) {
+      createTerminalWindow();
+    } else {
+      terminalWindow.focus();
+    }
+  });
+
+  ipcMain.on('open-terminal-with-command', (event, command) => {
+    createTerminalWindow(command);
+  });
+
+  // App control handlers
+  ipcMain.on('close-app', () => {
+    app.quit();
+  });
+
+  ipcMain.on('minimize-app', () => {
+    BrowserWindow.getFocusedWindow()?.minimize();
+  });
+}
+
+// App lifecycle
+app.whenReady().then(() => {
+  createMainWindow();
+  setupIPCHandlers();
+  
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createMainWindow();
+    }
+  });
 });
 
 app.on('window-all-closed', () => {
-    if (process.platform !== 'darwin') {
-        app.quit();
-    }
+  if (process.platform !== 'darwin') {
+    app.quit();
+  }
 });
 
-ipcMain.on('open-second-window', () => {
-    if (!secondWindow || secondWindow.isDestroyed()) {
-        secondWindow = new BrowserWindow({
-            width: 700,
-            height: 500,
-            webPreferences: {
-              preload: path.join(__dirname, 'src/controllers/preloadSecondWindow.js'), // Separate preload for second window
-              nodeIntegration: false,
-              contextIsolation: true
-            }
-        });
-
-        secondWindow.loadFile('src/views/terminal_page.html');
-
-        secondWindow.on('closed', () => {
-            secondWindow = null;
-        });
-    } else {
-        secondWindow.focus();
-    }
-});
-
-// --- New IPC Listener for executing commands ---
-ipcMain.handle('execute-command', async (event, command) => {
-    return new Promise((resolve, reject) => {
-        exec(command, (error, stdout, stderr) => {
-            if (error) {
-                console.error(`exec error: ${error}`);
-                resolve({ success: false, output: stderr || error.message });
-                return;
-            }
-            if (stderr) {
-                console.warn(`stderr: ${stderr}`);
-                resolve({ success: true, output: stdout + '\n' + stderr });
-                return;
-            }
-            resolve({ success: true, output: stdout });
-        });
+// Hot reload in development
+if (process.env.NODE_ENV === 'development') {
+  try {
+    require('electron-reloader')(module, {
+      debug: true,
+      watchRenderer: true
     });
-});
+  } catch (error) {
+    console.error('Hot reload error:', error);
+  }
+}
